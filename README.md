@@ -9,7 +9,7 @@ Features:<br>
 ✔️ Buildable into a standalone .exe with PyInstaller for Windows users.<br>
 
 Requirements:<br>
-Python 3.10<br>
+<a href="https://www.python.org/downloads/release/python-31011/">Python 3.10</a><br>
 pypng (pip install pypng)<br>
 
 Build Instructions:<br>
