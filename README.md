@@ -13,7 +13,7 @@ Requirements:<br>
 pypng (pip install pypng)<br>
 
 Build Instructions:<br>
-Run pyinstaller -w character_card_creator.py for a folder (~5-15 MB zipped).<br>
-Or pyinstaller -F -w character_card_creator.py for a single-file executable (~10-20 MB).<br><br>
+Run pyinstaller -w CharacterCardCreator.py for a folder (~5-15 MB zipped).<br>
+Or pyinstaller -F -w cCharacterCardCreator.py for a single-file executable (~10-20 MB).<br><br>
 
 Made for SillyTavern users who want a portable, easy-to-use tool for character card creation without complex dependencies.
