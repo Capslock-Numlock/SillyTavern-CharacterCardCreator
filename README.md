@@ -1,5 +1,5 @@
-SillyTavern Character Card Creator
-A lightweight Python application for creating SillyTavern character cards by embedding JSON data into PNG files. This tool features a simple GUI built with Tkinter, allowing users to either load a JSON file or paste JSON content directly, select a PNG image, and save the resulting character card with embedded metadata. Optimized for minimal size using pypng instead of heavier libraries like Pillow, it generates compact executables (~10-20 MB) for easy sharing.
+<b>SillyTavern Character Card Creator</b><br>
+A lightweight Python application for creating SillyTavern character cards by embedding JSON data into PNG files. This tool features a simple GUI built with Tkinter, allowing users to either load a JSON file or paste JSON content directly, select a PNG image, and save the resulting character card with embedded metadata. Optimized for minimal size using pypng instead of heavier libraries like Pillow, it generates compact executables (~10-20 MB) for easy sharing.<br>
 
 Features:<br>
 ✔️ Load JSON from files or paste directly via a text editor window.<br>
