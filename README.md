@@ -10,7 +10,7 @@ Features:<br>
 
 Requirements:<br>
 <a href="https://www.python.org/downloads/release/python-31011/">Python 3.10</a><br>
-pypng (pip install pypng)<br>
+pypng (<i>pip install pypng</i>)<br>
 
 Build Instructions:<br>
 Run <i>pyinstaller -w CharacterCardCreator.py</i> for a folder (~5-15 MB zipped).<br>
