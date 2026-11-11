@@ -1,14 +1,5 @@
-# IDE
+.DS_Store
+Thumbs.db
 .idea/
 .vscode/
-
-# Python
-__pycache__/
-*.pyc
-venv/
-.venv/
-
-# PyInstaller
-build/
-dist/
-*.spec
+node_modules/

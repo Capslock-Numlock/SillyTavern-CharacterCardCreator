@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character Card Creator for SillyTavern</title>
+<meta name="description" content="Create SillyTavern character cards (V2 and V3) in your browser. Single file, no install, works offline.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='3' width='20' height='26' rx='3' fill='none' stroke='%23e0a84b' stroke-width='2.2'/%3E%3Cpath d='M16 9l1.8 3.7 4 .6-2.9 2.8.7 4L16 18.2 12.4 20l.7-4-2.9-2.8 4-.6z' fill='%23e0a84b'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0d1016; --bg2:#121722; --surface:#161c27; --surface2:#1c2432; --line:#2a3345; --line2:#38445a;
+  --text:#e8eaf0; --muted:#9aa4b6; --faint:#6b7587;
+  --accent:#e0a84b; --accent-ink:#1a1204; --accent2:#8b7cf6;
+  --ok:#46b97a; --warn:#e5a93d; --err:#ef5b5b; --info:#6aa7e6;
+  --radius:12px; --shadow:0 10px 30px rgba(0,0,0,.35);
+  --serif:ui-serif,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+[data-theme="light"]{
+  --bg:#f5f2ec; --bg2:#efebe3; --surface:#ffffff; --surface2:#f6f3ed; --line:#ddd6c8; --line2:#c9c0ae;
+  --text:#1d1a14; --muted:#6a6355; --faint:#938a78;
+  --accent:#b7791f; --accent-ink:#fff8ea; --accent2:#5b4bd6;
+  --ok:#1f8a54; --warn:#b7791f; --err:#c93434; --info:#2f6fb5; --shadow:0 10px 30px rgba(60,40,10,.12);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1100px 500px at 10% -10%,rgba(139,124,246,.12),transparent 60%),radial-gradient(900px 500px at 100% 0%,rgba(224,168,75,.10),transparent 55%),var(--bg);
+  color:var(--text);font:15px/1.5 var(--sans);min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent2)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;backdrop-filter:blur(10px);background:color-mix(in srgb,var(--bg) 82%,transparent);border-bottom:1px solid var(--line)}
+.top-in{max-width:1320px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+.brand svg{width:34px;height:34px;color:var(--accent);flex:none}
+.brand h1{font:700 19px/1.1 var(--serif);margin:0;letter-spacing:.2px}
+.brand small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* buttons */
+.btn{appearance:none;border:1px solid var(--line2);background:var(--surface2);padding:8px 14px;border-radius:9px;cursor:pointer;font-weight:600;font-size:13.5px;display:inline-flex;gap:7px;align-items:center;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.btn.primary{background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 80%,#000));color:var(--accent-ink);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.danger:hover{border-color:var(--err);color:var(--err)}
+.btn.sm{padding:5px 10px;font-size:12.5px;border-radius:8px}
+.btn.icon{padding:6px 9px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+
+/* layout */
+.layout{max-width:1320px;margin:0 auto;padding:20px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start}
+@media(max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}.side{position:static!important}}
+.main{min-width:0}
+.side{position:sticky;top:84px;display:flex;flex-direction:column;gap:16px}
+
+/* tabs */
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;scrollbar-width:thin}
+.tab{appearance:none;border:0;background:transparent;padding:9px 15px;border-radius:9px;cursor:pointer;color:var(--muted);font-weight:600;font-size:14px;white-space:nowrap;display:flex;gap:7px;align-items:center}
+.tab:hover{color:var(--text);background:var(--surface2)}
+.tab[aria-selected="true"]{background:var(--surface2);color:var(--accent);box-shadow:inset 0 -2px 0 var(--accent)}
+.tab .badge{font-size:11px;background:var(--line);color:var(--text);border-radius:20px;padding:1px 7px}
+.panel{display:none;animation:fade .18s ease}
+.panel.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* cards / fields */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+.card>h2,.card>.h{font:700 17px var(--serif);margin:0 0 4px;display:flex;align-items:center;gap:8px}
+.card>.sub{color:var(--muted);margin:0 0 14px;font-size:13.5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.fhead{display:flex;align-items:baseline;gap:10px;margin-bottom:5px;flex-wrap:wrap}
+.fhead label,.lbl{font-weight:650;font-size:13.5px}
+.fhead .req{color:var(--err)}
+.tok{font:12px var(--mono);color:var(--faint);margin-left:auto}
+.macros{display:inline-flex;gap:4px}
+.macros button{border:1px solid var(--line);background:var(--surface2);color:var(--muted);border-radius:6px;font:11.5px var(--mono);padding:1px 6px;cursor:pointer}
+.macros button:hover{color:var(--accent);border-color:var(--accent)}
+.hint{color:var(--muted);font-size:12.5px;margin:5px 0 0}
+input[type=text],input[type=number],select,textarea{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;transition:border-color .15s}
+textarea{resize:vertical;min-height:84px;line-height:1.5}
+input:hover,select:hover,textarea:hover{border-color:var(--line2)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
+input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.check{display:flex;gap:8px;align-items:center;font-size:13.5px;cursor:pointer}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+details.adv{border-top:1px dashed var(--line);margin-top:14px;padding-top:12px}
+details.adv>summary{cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px}
+details.adv[open]>summary{margin-bottom:12px}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:6px 8px;cursor:text;min-height:42px;align-items:center}
+.chips:focus-within{border-color:var(--accent)}
+.chips input{border:0!important;background:transparent!important;padding:3px!important;flex:1;min-width:110px;width:auto}
+.chips input:focus-visible{outline:none}
+.chip{background:color-mix(in srgb,var(--accent2) 22%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 45%,transparent);border-radius:20px;padding:1px 4px 1px 10px;font-size:13px;display:inline-flex;gap:3px;align-items:center}
+.chip button{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:0 4px;border-radius:50%}
+.chip button:hover{color:var(--err)}
+
+/* lists */
+.item{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:10px}
+.item-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.item-h .n{font:700 12px var(--mono);color:var(--faint)}
+.empty{border:1px dashed var(--line2);border-radius:10px;padding:22px;text-align:center;color:var(--muted)}
+
+/* lorebook */
+.entry{border:1px solid var(--line);border-radius:10px;background:var(--surface2);margin-bottom:10px;overflow:hidden}
+.entry.off{opacity:.6}
+.entry-h{display:flex;gap:8px;align-items:center;padding:9px 10px;cursor:pointer}
+.entry-h:hover{background:color-mix(in srgb,var(--accent2) 8%,transparent)}
+.entry-h .ttl{flex:1;min-width:0;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry-h .ttl small{color:var(--muted);font-weight:400;margin-left:8px}
+.entry-h .chev{transition:.15s;color:var(--muted)}
+.entry.open .chev{transform:rotate(90deg)}
+.entry-b{display:none;padding:4px 14px 14px;border-top:1px solid var(--line)}
+.entry.open .entry-b{display:block}
+.pill{font-size:11px;border-radius:20px;padding:1px 8px;border:1px solid var(--line2);color:var(--muted)}
+.pill.const{color:var(--info);border-color:var(--info)}
+
+/* image tab */
+.imgwrap{display:grid;grid-template-columns:minmax(220px,320px) 1fr;gap:20px}
+@media(max-width:760px){.imgwrap{grid-template-columns:1fr}}
+.cropbox{position:relative;aspect-ratio:2/3;border-radius:12px;overflow:hidden;border:1px solid var(--line2);background:repeating-conic-gradient(var(--bg2) 0 25%,var(--surface2) 0 50%) 0 0/18px 18px;touch-action:none;cursor:grab}
+.cropbox:active{cursor:grabbing}
+.cropbox canvas{width:100%;height:100%;display:block}
+.cropbox.noimg{cursor:pointer}
+.drophint{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:20px;color:var(--muted);pointer-events:none;font-size:13.5px}
+.grid-lines{position:absolute;inset:0;pointer-events:none;background:linear-gradient(transparent 33%,rgba(255,255,255,.18) 33% calc(33% + 1px),transparent calc(33% + 1px) 66%,rgba(255,255,255,.18) 66% calc(66% + 1px),transparent calc(66% + 1px)),linear-gradient(90deg,transparent 33%,rgba(255,255,255,.18) 33% calc(33% + 1px),transparent calc(33% + 1px) 66%,rgba(255,255,255,.18) 66% calc(66% + 1px),transparent calc(66% + 1px));opacity:0;transition:.15s}
+.cropbox:hover .grid-lines{opacity:1}
+
+/* side */
+.tile{padding:14px}
+.tile .art{width:100%;aspect-ratio:2/3;border-radius:10px;overflow:hidden;border:1px solid var(--line2);box-shadow:var(--shadow);cursor:pointer;position:relative}
+.tile canvas{width:100%;height:100%;display:block}
+.tile .nm{font:700 20px var(--serif);margin:12px 0 2px;overflow-wrap:anywhere}
+.tile .by{color:var(--muted);font-size:13px}
+.tile .tg{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.tile .tg span{font-size:11.5px;padding:1px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--line);color:var(--muted)}
+.meter{margin:7px 0}
+.meter .m-h{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
+.meter .m-h b{color:var(--text);font-family:var(--mono);font-weight:600}
+.bar{height:6px;border-radius:6px;background:var(--bg2);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:6px;transition:width .25s}
+.bar i.hot{background:linear-gradient(90deg,var(--warn),var(--err))}
+.checks{list-style:none;padding:0;margin:0;font-size:13px}
+.checks li{display:flex;gap:8px;padding:4px 0;color:var(--muted)}
+.checks li b{flex:none;width:16px;text-align:center}
+.checks .ok b{color:var(--ok)}.checks .warn b{color:var(--warn)}.checks .err b{color:var(--err)}.checks .info b{color:var(--info)}
+.checks .err,.checks .warn{color:var(--text)}
+.side h3{font:700 12px var(--sans);text-transform:uppercase;letter-spacing:.9px;color:var(--faint);margin:0 0 8px}
+
+/* chat preview */
+.chat{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;min-height:200px}
+.msg{display:flex;gap:12px;margin-bottom:14px}
+.msg canvas{width:46px;height:69px;border-radius:8px;flex:none;border:1px solid var(--line2)}
+.msg .who{font-weight:700;margin-bottom:2px;display:flex;gap:10px;align-items:center}
+.msg .who small{font-weight:400;color:var(--faint)}
+.msg .bd{overflow-wrap:anywhere}
+.msg .bd i,.msg .bd em{color:var(--muted)}
+q{quotes:none}.chat q{color:var(--accent)}
+.msg .bd pre{background:var(--surface);padding:8px;border-radius:8px;overflow:auto;font:13px var(--mono)}
+.swipe{display:flex;align-items:center;gap:8px;margin-left:auto;font:12px var(--mono);color:var(--muted)}
+.ex{border-left:3px solid var(--accent2);padding:4px 12px;margin:8px 0;background:var(--surface);border-radius:0 8px 8px 0;font-size:14px}
+
+/* misc */
+pre.json,#raw{font:12.5px/1.5 var(--mono)}
+#raw{min-height:340px;white-space:pre;overflow:auto;tab-size:2}
+.status{font-size:13px;margin-top:8px}
+.status.err{color:var(--err)}.status.ok{color:var(--ok)}
+.seg{display:grid;gap:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--surface2)}
+.opt:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface2))}
+.opt input{margin-top:3px}
+.opt b{display:block;font-size:14px}
+.opt span{color:var(--muted);font-size:12.5px}
+kbd{font:12px var(--mono);background:var(--surface2);border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:0 5px}
+.steps{margin:0;padding-left:20px;color:var(--muted);font-size:14px}
+.steps li{margin:4px 0}
+
+/* overlay + toasts */
+#drop{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;pointer-events:none}
+#drop.on{display:flex}
+#drop div{border:3px dashed var(--accent);border-radius:24px;padding:60px 80px;text-align:center;font:700 26px var(--serif);color:var(--accent)}
+#drop small{display:block;font:400 15px var(--sans);color:var(--muted);margin-top:8px}
+#toasts{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{pointer-events:auto;background:var(--surface);border:1px solid var(--line2);border-left:4px solid var(--info);border-radius:10px;padding:10px 14px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:center;max-width:90vw;animation:fade .2s}
+.toast.ok{border-left-color:var(--ok)}.toast.err{border-left-color:var(--err)}.toast.warn{border-left-color:var(--warn)}
+.toast button{border:0;background:transparent;color:var(--accent);font-weight:700;cursor:pointer}
+footer{max-width:1320px;margin:10px auto 40px;padding:0 20px;color:var(--faint);font-size:12.5px;text-align:center}
+</style>
+</head>
+<body>
+<noscript><p style="padding:20px">This app needs JavaScript. It runs entirely in your browser and sends nothing anywhere.</p></noscript>
+
+<header class="top"><div class="top-in">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="3" width="20" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16 9l1.8 3.7 4 .6-2.9 2.8.7 4L16 18.2 12.4 20l.7-4-2.9-2.8 4-.6z" fill="currentColor"/></svg>
+    <div><h1>Character Card Creator</h1><small>for SillyTavern · V2 + V3 · runs offline</small></div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="btnOpen" title="Open a card PNG or a JSON file">📂 Open</button>
+    <button class="btn" id="btnExample" title="Load a sample card">✨ Example</button>
+    <button class="btn danger" id="btnNew" title="Start with a blank card">🗑 New</button>
+    <button class="btn ghost" id="btnTheme" title="Toggle light / dark" aria-label="Toggle theme">🌓 Theme</button>
+    <button class="btn primary" id="btnExportTop" title="Ctrl/Cmd + S">⬇ Export PNG</button>
+  </div>
+</div></header>
+
+<main class="layout">
+<section class="main">
+  <nav class="tabs" role="tablist" aria-label="Card sections">
+    <button class="tab" role="tab" data-tab="identity" aria-selected="true">🪪 Identity</button>
+    <button class="tab" role="tab" data-tab="greetings" aria-selected="false">💬 Greetings</button>
+    <button class="tab" role="tab" data-tab="prompts" aria-selected="false">⚙️ Prompts</button>
+    <button class="tab" role="tab" data-tab="lorebook" aria-selected="false">📚 Lorebook <span class="badge" id="loreCount">0</span></button>
+    <button class="tab" role="tab" data-tab="image" aria-selected="false">🖼 Image</button>
+    <button class="tab" role="tab" data-tab="preview" aria-selected="false">👁 Preview</button>
+    <button class="tab" role="tab" data-tab="export" aria-selected="false">📦 Export &amp; JSON</button>
+  </nav>
+
+  <!-- IDENTITY -->
+  <div class="panel on" id="p-identity" role="tabpanel">
+    <div class="card">
+      <h2>Who is this?</h2><p class="sub">The basics shown in SillyTavern's character list.</p>
+      <div class="grid2">
+        <div class="field"><div class="fhead"><label for="f-name">Name <span class="req">*</span></label></div>
+          <input type="text" id="f-name" data-f="name" placeholder="e.g. Mirelle Voss" autocomplete="off"></div>
+        <div class="field"><div class="fhead"><label for="f-creator">Creator</label></div>
+          <input type="text" id="f-creator" data-f="creator" placeholder="Your name or handle" autocomplete="off"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><div class="fhead"><label for="f-ver">Character version</label></div>
+          <input type="text" id="f-ver" data-f="character_version" placeholder="1.0" autocomplete="off"></div>
+        <div class="field"><div class="fhead"><label>Tags</label></div><div id="tagsMount"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Description</h2><p class="sub">Who the character is: appearance, background, speech, quirks. Sent with every message.</p>
+      <div class="field"><div class="fhead"><label for="f-description">Description</label><span class="macros" data-m="f-description"></span><span class="tok" data-tokof="description"></span></div>
+        <textarea id="f-description" data-f="description" rows="12" placeholder="{{char}} is a lantern-keeper who ..."></textarea></div>
+      <div class="field"><div class="fhead"><label for="f-personality">Personality</label><span class="macros" data-m="f-personality"></span><span class="tok" data-tokof="personality"></span></div>
+        <textarea id="f-personality" data-f="personality" rows="3" placeholder="Short summary: dry, patient, secretly sentimental"></textarea>
+        <p class="hint">Optional. Many modern cards fold this into the description.</p></div>
+      <div class="field"><div class="fhead"><label for="f-scenario">Scenario</label><span class="macros" data-m="f-scenario"></span><span class="tok" data-tokof="scenario"></span></div>
+        <textarea id="f-scenario" data-f="scenario" rows="4" placeholder="Where and why {{user}} meets {{char}}"></textarea></div>
+    </div>
+
+    <div class="card">
+      <h2>Creator's notes</h2><p class="sub">Shown to the person reading the card. Never sent to the model.</p>
+      <div class="field"><div class="fhead"><label for="f-notes">Notes</label><span class="tok" data-tokof="creator_notes"></span></div>
+        <textarea id="f-notes" data-f="creator_notes" rows="5" placeholder="Tips, content warnings, recommended settings, credits ..."></textarea></div>
+      <details class="adv"><summary>Advanced (V3 only)</summary>
+        <div class="field"><div class="fhead"><label for="f-nick">Nickname</label></div>
+          <input type="text" id="f-nick" data-f="nickname" placeholder="Used instead of the name for {{char}} if set" autocomplete="off">
+          <p class="hint">Only written when exporting V3 (see Export tab).</p></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- GREETINGS -->
+  <div class="panel" id="p-greetings" role="tabpanel">
+    <div class="card">
+      <h2>First message</h2><p class="sub">The opening message of every new chat.</p>
+      <div class="field"><div class="fhead"><label for="f-first">First message</label><span class="macros" data-m="f-first"></span><span class="tok" data-tokof="first_mes"></span></div>
+        <textarea id="f-first" data-f="first_mes" rows="10" placeholder="*She looks up from the lamp she's trimming.* &quot;Another traveler. Sit, {{user}}.&quot;"></textarea>
+        <p class="hint">Markdown works: <code>*actions*</code> and <code>"speech"</code> are styled in the Preview tab.</p></div>
+    </div>
+    <div class="card">
+      <h2>Alternate greetings</h2><p class="sub">Players can swipe between these on the first message.</p>
+      <div id="altList"></div>
+      <button class="btn sm" id="addAlt">＋ Add greeting</button>
+    </div>
+    <div class="card">
+      <h2>Example dialogue</h2><p class="sub">Shows the model how the character talks. Separate examples with <code>&lt;START&gt;</code>.</p>
+      <div class="field"><div class="fhead"><label for="f-ex">Examples</label><span class="macros" data-m="f-ex"></span>
+          <button class="btn sm ghost" type="button" id="insStart">Insert &lt;START&gt;</button><span class="tok" data-tokof="mes_example"></span></div>
+        <textarea id="f-ex" data-f="mes_example" rows="10" placeholder="<START>&#10;{{user}}: Hello?&#10;{{char}}: *glances up* &quot;Hm. Hello.&quot;"></textarea></div>
+    </div>
+    <div class="card">
+      <h2>Group-only greetings <span class="pill">V3</span></h2><p class="sub">Used instead of the first message when the character joins a group chat.</p>
+      <div id="groupList"></div>
+      <button class="btn sm" id="addGroup">＋ Add group greeting</button>
+    </div>
+  </div>
+
+  <!-- PROMPTS -->
+  <div class="panel" id="p-prompts" role="tabpanel">
+    <div class="card">
+      <h2>Prompt overrides</h2><p class="sub">Optional. Users must allow card prompts in SillyTavern's settings for these to apply.</p>
+      <div class="field"><div class="fhead"><label for="f-sys">Main prompt</label><span class="macros" data-m="f-sys"></span><span class="tok" data-tokof="system_prompt"></span></div>
+        <textarea id="f-sys" data-f="system_prompt" rows="5" placeholder="Replaces the main system prompt. Use {{original}} to include the user's own."></textarea></div>
+      <div class="field"><div class="fhead"><label for="f-post">Post-history instructions (jailbreak)</label><span class="macros" data-m="f-post"></span><span class="tok" data-tokof="post_history_instructions"></span></div>
+        <textarea id="f-post" data-f="post_history_instructions" rows="5" placeholder="Sent after the chat history. Use {{original}} to include the user's own."></textarea></div>
+    </div>
+    <div class="card">
+      <h2>Character's note (depth prompt)</h2><p class="sub">Inserted into the chat history at a fixed depth. Good for reminders that the model keeps forgetting.</p>
+      <div class="field"><div class="fhead"><label for="f-dp">Prompt</label><span class="macros" data-m="f-dp"></span><span class="tok" data-tokof="extensions.depth_prompt.prompt"></span></div>
+        <textarea id="f-dp" data-f="extensions.depth_prompt.prompt" rows="4"></textarea></div>
+      <div class="grid2">
+        <div class="field"><div class="fhead"><label for="f-dpd">Depth</label></div><input type="number" id="f-dpd" data-f="extensions.depth_prompt.depth" min="0" max="999"></div>
+        <div class="field"><div class="fhead"><label for="f-dpr">Role</label></div>
+          <select id="f-dpr" data-f="extensions.depth_prompt.role"><option value="system">System</option><option value="user">User</option><option value="assistant">Assistant</option></select></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Behaviour</h2><p class="sub">Group chat and misc. settings stored in the card's extensions.</p>
+      <div class="field"><div class="fhead"><label for="f-talk">Talkativeness</label><span class="tok" id="talkOut">0.50</span></div>
+        <input type="range" id="f-talk" data-f="extensions.talkativeness" min="0" max="1" step="0.05">
+        <p class="hint">How often this character replies in group chats (0 = quiet, 1 = chatterbox).</p></div>
+      <div class="grid2">
+        <div class="field"><div class="fhead"><label for="f-world">Linked world / lorebook name</label></div>
+          <input type="text" id="f-world" data-f="extensions.world" placeholder="Name of a global lorebook to attach" autocomplete="off"></div>
+        <div class="field" style="align-self:end"><label class="check"><input type="checkbox" data-f="extensions.fav"> Mark as favourite</label></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOREBOOK -->
+  <div class="panel" id="p-lorebook" role="tabpanel">
+    <div id="loreEmpty" class="card">
+      <h2>📚 Embedded lorebook</h2><p class="sub">Add world info that travels with the card. Entries are injected when their keywords appear in the chat.</p>
+      <div class="row"><button class="btn primary" id="addBook">Create lorebook</button><button class="btn" id="importLoreEmpty">Import SillyTavern world info…</button></div>
+    </div>
+    <div id="loreMain" hidden>
+      <div class="card">
+        <h2>Lorebook settings</h2>
+        <div class="grid2">
+          <div class="field"><div class="fhead"><label>Name</label></div><input type="text" data-f="character_book.name" placeholder="Book name"></div>
+          <div class="field"><div class="fhead"><label>Description</label></div><input type="text" data-f="character_book.description" placeholder="What this book is for"></div>
+        </div>
+        <div class="grid3">
+          <div class="field"><div class="fhead"><label>Scan depth</label></div><input type="number" min="0" max="999" data-f="character_book.scan_depth"></div>
+          <div class="field"><div class="fhead"><label>Token budget</label></div><input type="number" min="0" max="99999" data-f="character_book.token_budget"></div>
+          <div class="field" style="align-self:end"><label class="check"><input type="checkbox" data-f="character_book.recursive_scanning"> Recursive scanning</label></div>
+        </div>
+        <div class="row" style="margin-top:14px">
+          <button class="btn sm" id="importLore">Import world info…</button>
+          <button class="btn sm" id="exportLore">Export lorebook JSON</button>
+          <span class="spacer"></span>
+          <button class="btn sm danger" id="removeBook">Remove lorebook</button>
+        </div>
+      </div>
+      <div id="entryList"></div>
+      <div class="row"><button class="btn primary" id="addEntry">＋ Add entry</button><button class="btn" id="toggleAll">Expand / collapse all</button></div>
+    </div>
+  </div>
+
+  <!-- IMAGE -->
+  <div class="panel" id="p-image" role="tabpanel">
+    <div class="card">
+      <h2>Card art</h2><p class="sub">Any image works: PNG, JPG, WebP, GIF (first frame). It is converted to a PNG that carries your card data. Drop an image anywhere on the page, or click the frame.</p>
+      <div class="imgwrap">
+        <div>
+          <div class="cropbox noimg" id="cropbox">
+            <canvas id="cropCanvas" width="400" height="600"></canvas>
+            <div class="grid-lines"></div>
+            <div class="drophint" id="dropHint"><div style="font-size:34px">🖼</div><b>Click or drop an image</b><span>No image? A placeholder is generated for you.</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="field"><div class="fhead"><label for="f-size">Output size</label></div>
+            <select id="f-size" data-s="size">
+              <option value="512x768">Crop to 2:3 · 512 × 768 (recommended)</option>
+              <option value="400x600">Crop to 2:3 · 400 × 600</option>
+              <option value="800x1200">Crop to 2:3 · 800 × 1200</option>
+              <option value="original">Keep original (no crop, no resize)</option>
+            </select>
+            <p class="hint" id="sizeHint">SillyTavern shows cards at 2:3, so this ratio avoids surprise cropping.</p></div>
+          <div class="field"><div class="fhead"><label for="f-zoom">Zoom</label></div>
+            <input type="range" id="f-zoom" min="1" max="5" step="0.01" value="1"><p class="hint">Drag the picture to reposition. Scroll to zoom.</p></div>
+          <div class="row">
+            <button class="btn" id="pickImg">Choose image…</button>
+            <button class="btn" id="resetCrop">Reset crop</button>
+            <button class="btn danger" id="clearImg">Remove image</button>
+          </div>
+          <p class="hint" id="imgInfo" style="margin-top:14px"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="panel" id="p-preview" role="tabpanel">
+    <div class="card">
+      <h2>Chat preview</h2><p class="sub">A rough idea of how the first message reads in chat. <code>{{char}}</code> and <code>{{user}}</code> are filled in.</p>
+      <div class="grid2" style="margin-bottom:14px"><div class="field" style="margin:0"><div class="fhead"><label for="f-user">Your name in the preview</label></div><input type="text" id="f-user" data-s="userName" autocomplete="off"></div></div>
+      <div class="chat" id="chat"></div>
+    </div>
+    <div class="card"><h2>Example dialogue</h2><div id="exPrev" class="chat"></div></div>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="panel" id="p-export" role="tabpanel">
+    <div class="card">
+      <h2>Export</h2><p class="sub">Choose which card format gets written into the PNG.</p>
+      <div class="seg" id="formatSeg">
+        <label class="opt"><input type="radio" name="fmt" value="both" data-s="format"><div><b>V2 + V3 (recommended)</b><span>Writes both the <code>chara</code> and <code>ccv3</code> chunks. Works with every SillyTavern version; newer ones read V3.</span></div></label>
+        <label class="opt"><input type="radio" name="fmt" value="v2" data-s="format"><div><b>V2 only</b><span>Maximum compatibility with older frontends. V3-only fields (nickname, group greetings) are dropped.</span></div></label>
+        <label class="opt"><input type="radio" name="fmt" value="v3" data-s="format"><div><b>V3 only</b><span>The newest spec. Older tools may not read it.</span></div></label>
+      </div>
+      <div class="field" style="margin-top:16px"><div class="fhead"><label for="f-file">File name</label></div>
+        <input type="text" id="f-file" data-s="filename" placeholder="Leave empty to use the character's name" autocomplete="off"></div>
+      <div class="row">
+        <button class="btn primary" id="btnExportPng">⬇ Download PNG card</button>
+        <button class="btn" id="btnJson2">JSON (V2)</button>
+        <button class="btn" id="btnJson3">JSON (V3)</button>
+        <button class="btn" id="btnCopy">Copy JSON</button>
+      </div>
+      <p class="hint" style="margin-top:12px">To use it: in SillyTavern open the character panel, click <b>Import character from file</b>, and pick the PNG.</p>
+    </div>
+    <div class="card">
+      <h2>Raw JSON</h2><p class="sub">Edit the card directly, or paste JSON from elsewhere, then apply it to the form.</p>
+      <div class="row" style="margin-bottom:10px">
+        <select id="rawVer" data-s="rawVersion" style="width:auto"><option value="v2">V2 (chara_card_v2)</option><option value="v3">V3 (chara_card_v3)</option></select>
+        <button class="btn sm" id="rawRefresh">↻ Refresh from form</button>
+        <button class="btn sm primary" id="rawApply">Apply to form</button>
+      </div>
+      <textarea id="raw" spellcheck="false" aria-label="Raw card JSON"></textarea>
+      <div class="status" id="rawStatus"></div>
+    </div>
+  </div>
+</section>
+
+<aside class="side">
+  <div class="card tile">
+    <div class="art" id="tileArt" title="Change image"><canvas id="tile" width="340" height="510"></canvas></div>
+    <div class="nm" id="tileName">Unnamed character</div>
+    <div class="by" id="tileBy"></div>
+    <div class="tg" id="tileTags"></div>
+  </div>
+  <div class="card" style="padding:14px">
+    <h3>Context size <span style="text-transform:none;letter-spacing:0;font-weight:400">(≈ estimate)</span></h3>
+    <div id="meters"></div>
+  </div>
+  <div class="card" style="padding:14px">
+    <h3>Checks</h3>
+    <ul class="checks" id="checks"></ul>
+  </div>
+  <button class="btn primary" id="btnExportSide" style="justify-content:center;padding:11px">⬇ Export PNG card</button>
+</aside>
+</main>
+
+<footer>Everything happens in your browser. Nothing is uploaded. Your draft is autosaved in this browser only. · <a href="https://github.com/Capslock-Numlock/SillyTavern-CharacterCardCreator">GitHub</a> · MIT</footer>
+
+<div id="drop"><div>Drop a card, JSON or image<small>PNG cards load their data · images set the art · JSON loads a card or lorebook</small></div></div>
+<div id="toasts" aria-live="polite"></div>
+<input type="file" id="fileOpen" hidden accept=".png,.json,.txt,application/json,image/*" multiple>
+<input type="file" id="fileImg" hidden accept="image/*">
+<input type="file" id="fileLore" hidden accept=".json,application/json">
+
+<script>
+'use strict';
+/* ==========================================================================
+   Character Card Creator for SillyTavern — single file, no dependencies.
+   Sections: helpers · PNG/chunks · card model · import · export · UI
+   ========================================================================== */
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function el(tag, props = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') n.className = v;
+    else if (k === 'text') n.textContent = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else if (v === true) n.setAttribute(k, '');
+    else if (v !== false && v != null) n.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null) n.append(kid);
+  return n;
+}
+function getPath(o, p) { return p.split('.').reduce((a, k) => (a == null ? a : a[k]), o); }
+function setPath(o, p, v) { const ks = p.split('.'); const last = ks.pop(); const t = ks.reduce((a, k) => (a[k] ??= {}), o); t[last] = v; }
+const tok = s => Math.ceil(String(s || '').length / 4);
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+/* ---------- PNG chunk handling ---------- */
+const PNG_SIG = [137, 80, 78, 71, 13, 10, 26, 10];
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+const isPng = u8 => u8.length > 8 && PNG_SIG.every((b, i) => u8[i] === b);
+const ascii = (u8, a, b) => String.fromCharCode(...u8.subarray(a, b));
+const latin1 = s => Uint8Array.from(s, c => c.charCodeAt(0) & 255);
+
+function parsePng(u8) {
+  if (!isPng(u8)) throw new Error('Not a PNG file');
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const chunks = []; let o = 8;
+  while (o + 12 <= u8.length) {
+    const len = dv.getUint32(o); const type = ascii(u8, o + 4, o + 8);
+    if (o + 12 + len > u8.length) throw new Error('PNG is truncated or corrupt');
+    chunks.push({ type, data: u8.subarray(o + 8, o + 8 + len) });
+    o += 12 + len;
+    if (type === 'IEND') break;
+  }
+  if (!chunks.length || chunks[chunks.length - 1].type !== 'IEND') throw new Error('PNG has no IEND chunk');
+  return chunks;
+}
+function buildChunk(type, data) {
+  const out = new Uint8Array(12 + data.length); const dv = new DataView(out.buffer);
+  dv.setUint32(0, data.length); out.set(latin1(type), 4); out.set(data, 8);
+  dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+  return out;
+}
+const textChunk = (kw, text) => buildChunk('tEXt', Uint8Array.from([...latin1(kw), 0, ...latin1(text)]));
+const TEXT_TYPES = ['tEXt', 'zTXt', 'iTXt'];
+function chunkKeyword(ch) { const i = ch.data.indexOf(0); return i < 0 ? '' : ascii(ch.data, 0, i); }
+
+function b64encodeUtf8(str) {
+  const b = new TextEncoder().encode(str); let s = '';
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function b64decodeUtf8(b64) { const s = atob(b64.replace(/\s/g, '')); return new TextDecoder().decode(Uint8Array.from(s, c => c.charCodeAt(0))); }
+
+async function inflate(u8) {
+  const stream = new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function decodeTextChunk(ch) {
+  const d = ch.data; const z = d.indexOf(0); if (z < 0) return null;
+  const keyword = ascii(d, 0, z);
+  if (ch.type === 'tEXt') return { keyword, text: ascii(d, z + 1, d.length) };
+  if (ch.type === 'zTXt') return { keyword, text: new TextDecoder('latin1').decode(await inflate(d.subarray(z + 2))) };
+  if (ch.type === 'iTXt') {
+    const compressed = d[z + 1] === 1; let p = z + 3;
+    p = d.indexOf(0, p) + 1; p = d.indexOf(0, p) + 1; // skip language + translated keyword
+    let body = d.subarray(p); if (compressed) body = await inflate(body);
+    return { keyword, text: new TextDecoder().decode(body) };
+  }
+  return null;
+}
+function parsePayload(raw) {
+  const t = raw.trim();
+  try { return JSON.parse(b64decodeUtf8(t)); } catch { /* maybe plain JSON */ }
+  return JSON.parse(t);
+}
+/** Returns {json, version:'V2'|'V3'} or null when the PNG carries no card data. */
+async function readCardFromPng(u8) {
+  let v2 = null, v3 = null;
+  for (const ch of parsePng(u8)) {
+    if (!TEXT_TYPES.includes(ch.type)) continue;
+    const kw = chunkKeyword(ch).toLowerCase();
+    if (kw !== 'chara' && kw !== 'ccv3') continue;
+    const t = await decodeTextChunk(ch); if (!t) continue;
+    if (kw === 'ccv3') v3 = t.text; else v2 = t.text;
+  }
+  if (v3 == null && v2 == null) return null;
+  // Like SillyTavern, prefer V3 when both are present.
+  if (v3 != null) { try { return { json: parsePayload(v3), version: 'V3' }; } catch (e) { if (v2 == null) throw e; } }
+  return { json: parsePayload(v2), version: 'V2' };
+}
+function embedCardInPng(pngBytes, payloads) {
+  const chunks = parsePng(pngBytes).filter(ch => !(TEXT_TYPES.includes(ch.type) && ['chara', 'ccv3'].includes(chunkKeyword(ch).toLowerCase())));
+  const parts = [Uint8Array.from(PNG_SIG)];
+  for (const ch of chunks) {
+    if (ch.type === 'IEND') for (const [kw, json] of payloads) parts.push(textChunk(kw, b64encodeUtf8(JSON.stringify(json))));
+    parts.push(buildChunk(ch.type, ch.data));
+  }
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0)); let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+/* ---------- Card model ---------- */
+const KNOWN = new Set(['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example', 'creator_notes', 'system_prompt',
+  'post_history_instructions', 'alternate_greetings', 'tags', 'creator', 'character_version', 'extensions', 'character_book', 'nickname', 'group_only_greetings']);
+const V3_ONLY = ['creator_notes_multilingual', 'source', 'assets', 'creation_date', 'modification_date'];
+const LEGACY = new Set(['char_name', 'char_persona', 'world_scenario', 'char_greeting', 'example_dialogue', 'creatorcomment', 'avatar', 'chat', 'talkativeness', 'fav', 'spec', 'spec_version', 'data', 'create_date', 'metadata']);
+let uidN = 0;
+
+const blankBook = () => ({ name: '', description: '', scan_depth: 50, token_budget: 500, recursive_scanning: false, extensions: {}, entries: [] });
+const blankEntry = () => ({ _uid: ++uidN, _open: true, keys: [], secondary_keys: [], content: '', comment: '', enabled: true, constant: false, selective: false,
+  insertion_order: 100, priority: 10, case_sensitive: false, use_regex: false, position: 'before_char', extensions: {} });
+const blankCard = () => ({
+  name: '', description: '', personality: '', scenario: '', first_mes: '', mes_example: '', creator_notes: '', system_prompt: '',
+  post_history_instructions: '', alternate_greetings: [], group_only_greetings: [], tags: [], creator: '', character_version: '', nickname: '',
+  extensions: { talkativeness: 0.5, fav: false, world: '', depth_prompt: { prompt: '', depth: 4, role: 'system' } },
+  character_book: null, extra: {}
+});
+
+const asStr = v => (v == null ? '' : String(v));
+const asList = v => Array.isArray(v) ? v.map(asStr) : [];
+const asTags = v => (Array.isArray(v) ? v.map(asStr) : typeof v === 'string' ? v.split(',') : []).map(s => s.trim()).filter(Boolean);
+
+function entryFromJson(e, i) {
+  const n = blankEntry(); const ext = { ...(e.extensions || {}) };
+  n.keys = asTags(e.keys ?? e.key); n.secondary_keys = asTags(e.secondary_keys ?? e.keysecondary);
+  n.content = asStr(e.content); n.comment = asStr(e.comment ?? e.name);
+  n.enabled = e.enabled !== undefined ? !!e.enabled : e.disable !== undefined ? !e.disable : true;
+  n.constant = !!e.constant; n.selective = !!e.selective;
+  n.insertion_order = Number(e.insertion_order ?? e.order ?? i * 10 + 100) || 0;
+  n.priority = Number(e.priority ?? 10) || 0;
+  n.case_sensitive = !!(e.case_sensitive ?? e.caseSensitive ?? false);
+  n.use_regex = !!e.use_regex;
+  const pos = e.position ?? ext.position;
+  n.position = (pos === 'after_char' || pos === 1) ? 'after_char' : 'before_char';
+  // Keep SillyTavern-specific extras (depth, probability, selectiveLogic, ...)
+  for (const k of ['depth', 'probability', 'selectiveLogic', 'group', 'excludeRecursion', 'preventRecursion', 'scanDepth', 'role', 'useProbability', 'displayIndex', 'delayUntilRecursion', 'sticky', 'cooldown', 'delay'])
+    if (e[k] !== undefined && ext[k] === undefined) ext[k] = e[k];
+  if (e.position !== undefined && typeof e.position === 'number') ext.position = e.position;
+  n.extensions = ext; n._open = false;
+  return n;
+}
+function bookFromJson(b) {
+  if (!b || typeof b !== 'object') return null;
+  const book = blankBook();
+  book.name = asStr(b.name); book.description = asStr(b.description);
+  book.scan_depth = Number(b.scan_depth ?? 50); book.token_budget = Number(b.token_budget ?? 500);
+  book.recursive_scanning = !!b.recursive_scanning; book.extensions = { ...(b.extensions || {}) };
+  const raw = Array.isArray(b.entries) ? b.entries : Object.values(b.entries || {});
+  book.entries = raw.map(entryFromJson);
+  return book;
+}
+/** Accepts V1 / V2 / V3 / tavern-style objects and returns the editor's card model. */
+function cardFromJson(j) {
+  if (!j || typeof j !== 'object' || Array.isArray(j)) throw new Error('That JSON is not an object.');
+  let d;
+  if (j.data && typeof j.data === 'object' && (j.spec || j.data.name !== undefined)) d = j.data;
+  else if (j.name !== undefined || j.char_name !== undefined) d = j;
+  else throw new Error('This JSON does not look like a character card (no "name" field).');
+  const c = blankCard();
+  c.name = asStr(d.name ?? d.char_name); c.description = asStr(d.description ?? d.char_persona);
+  c.personality = asStr(d.personality); c.scenario = asStr(d.scenario ?? d.world_scenario);
+  c.first_mes = asStr(d.first_mes ?? d.char_greeting); c.mes_example = asStr(d.mes_example ?? d.example_dialogue);
+  c.creator_notes = asStr(d.creator_notes ?? d.creatorcomment ?? (d === j ? '' : j.creatorcomment));
+  c.system_prompt = asStr(d.system_prompt); c.post_history_instructions = asStr(d.post_history_instructions);
+  c.alternate_greetings = asList(d.alternate_greetings); c.group_only_greetings = asList(d.group_only_greetings);
+  c.tags = asTags(d.tags); c.creator = asStr(d.creator);
+  c.character_version = asStr(d.character_version); c.nickname = asStr(d.nickname);
+  const ext = d.extensions && typeof d.extensions === 'object' ? clone(d.extensions) : {};
+  const dp = { ...c.extensions.depth_prompt, ...(ext.depth_prompt || {}) };
+  c.extensions = { ...c.extensions, ...ext, depth_prompt: dp };
+  const tk = Number(ext.talkativeness ?? j.talkativeness ?? d.talkativeness ?? 0.5);
+  c.extensions.talkativeness = Number.isFinite(tk) ? clamp(tk, 0, 1) : 0.5;
+  c.extensions.fav = !!(ext.fav ?? j.fav ?? d.fav ?? false); c.extensions.world = asStr(ext.world);
+  c.extensions.depth_prompt.depth = Number(dp.depth ?? 4); c.extensions.depth_prompt.prompt = asStr(dp.prompt);
+  c.extensions.depth_prompt.role = ['system', 'user', 'assistant'].includes(dp.role) ? dp.role : 'system';
+  if (d.character_book) c.character_book = bookFromJson(d.character_book);
+  for (const [k, v] of Object.entries(d)) if (!KNOWN.has(k) && !LEGACY.has(k)) c.extra[k] = v;
+  return c;
+}
+function entryToJson(e, i, v3) {
+  const ext = { ...e.extensions }; ext.position = ext.position > 1 ? ext.position : (e.position === 'after_char' ? 1 : 0);
+  const o = { id: i, keys: [...e.keys], secondary_keys: [...e.secondary_keys], comment: e.comment, name: e.comment, content: e.content,
+    constant: e.constant, selective: e.selective, insertion_order: e.insertion_order, enabled: e.enabled, position: e.position,
+    priority: e.priority, case_sensitive: e.case_sensitive, extensions: ext };
+  if (v3) o.use_regex = !!e.use_regex;
+  return o;
+}
+function bookToJson(b, v3) {
+  return { name: b.name, description: b.description, scan_depth: Number(b.scan_depth) || 0, token_budget: Number(b.token_budget) || 0,
+    recursive_scanning: !!b.recursive_scanning, extensions: { ...b.extensions }, entries: b.entries.map((e, i) => entryToJson(e, i, v3)) };
+}
+function cardToJson(c, version) {
+  const v3 = version === 'v3'; const now = Math.floor(Date.now() / 1000);
+  const ext = clone(c.extensions); ext.talkativeness = Number(ext.talkativeness);
+  const data = { name: c.name, description: c.description, personality: c.personality, scenario: c.scenario, first_mes: c.first_mes,
+    mes_example: c.mes_example, creator_notes: c.creator_notes, system_prompt: c.system_prompt, post_history_instructions: c.post_history_instructions,
+    alternate_greetings: [...c.alternate_greetings], tags: [...c.tags], creator: c.creator, character_version: c.character_version, extensions: ext };
+  if (c.character_book) data.character_book = bookToJson(c.character_book, v3);
+  for (const [k, v] of Object.entries(c.extra)) if (v3 || !V3_ONLY.includes(k)) data[k] = v;
+  if (v3) {
+    data.nickname = c.nickname || undefined; data.group_only_greetings = [...c.group_only_greetings];
+    data.creation_date = c.extra.creation_date || now; data.modification_date = now;
+    return JSON.parse(JSON.stringify({ spec: 'chara_card_v3', spec_version: '3.0', data }));
+  }
+  // V2 also carries SillyTavern's legacy top-level mirror for older readers.
+  return JSON.parse(JSON.stringify({
+    name: c.name, description: c.description, personality: c.personality, scenario: c.scenario, first_mes: c.first_mes, mes_example: c.mes_example,
+    creatorcomment: c.creator_notes, avatar: 'none', chat: `${c.name || 'Character'} - ${new Date().toISOString().slice(0, 10)}`,
+    talkativeness: String(ext.talkativeness), fav: !!ext.fav, tags: [...c.tags], spec: 'chara_card_v2', spec_version: '2.0', data
+  }));
+}
+/** SillyTavern "world info" file → character-book entries */
+function loreFromJson(j) {
+  if (!j || typeof j !== 'object') throw new Error('Not a lorebook JSON object.');
+  const src = j.character_book || j.data?.character_book || j;
+  if (!src.entries) throw new Error('No "entries" found in that file.');
+  return bookFromJson(src);
+}
+
+/* ---------- App state ---------- */
+const KEY = 'stcc.draft.v2';
+const DEFAULTS = { format: 'both', filename: '', size: '512x768', userName: 'You', theme: 'dark', rawVersion: 'v2' };
+const S = { card: blankCard(), img: null, settings: { ...DEFAULTS }, crop: { zoom: 1, cx: .5, cy: .5 }, tab: 'identity' };
+let undoSnap = null;
+
+function snapshot() { return { card: clone(S.card), settings: clone(S.settings), crop: { ...S.crop }, imgState: S.img }; }
+function restoreSnapshot(s) { S.card = s.card; S.settings = s.settings; S.crop = s.crop; S.img = s.imgState; syncAll(); }
+
+/* ---------- Toasts ---------- */
+function toast(msg, kind = 'info', action, ms = 4200) {
+  const t = el('div', { class: 'toast ' + kind }, el('span', { text: msg }));
+  if (action) t.append(el('button', { text: action.label, onclick: () => { action.fn(); t.remove(); } }));
+  $('#toasts').append(t); setTimeout(() => t.remove(), action ? 9000 : ms);
+}
+function withUndo(msg) { undoSnap = snapshot(); toast(msg, 'ok', { label: 'Undo', fn: () => { if (undoSnap) { restoreSnapshot(undoSnap); undoSnap = null; toast('Restored', 'info'); } } }); }
+
+/* ---------- Image handling ---------- */
+function loadImgEl(url) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('The browser could not decode that image.')); i.src = url; }); }
+async function setImage(bytes, name, mime) {
+  const blob = new Blob([bytes], { type: mime || (isPng(bytes) ? 'image/png' : '') });
+  const url = URL.createObjectURL(blob);
+  let el_; try { el_ = await loadImgEl(url); } catch (e) { URL.revokeObjectURL(url); throw e; } // (old URLs are kept alive so Undo keeps working)
+  const png = isPng(bytes);
+  S.img = { bytes, url, el: el_, w: el_.naturalWidth, h: el_.naturalHeight, name: name || 'image', isPng: png, mime: blob.type };
+  S.crop = { zoom: 1, cx: .5, cy: .5 };
+  if (png && Math.abs(S.img.w / S.img.h - 2 / 3) < 0.01) S.settings.size = 'original';
+  else if (S.settings.size === 'original' && !(png && Math.abs(S.img.w / S.img.h - 2 / 3) < 0.01)) S.settings.size = '512x768';
+  syncImageUi(); touch(); saveImageDraft();
+}
+function outSize() { const m = /^(\d+)x(\d+)$/.exec(S.settings.size); return m ? [+m[1], +m[2]] : null; }
+/** Draw the image "cover"-fitted to W×H using the current crop. Returns the clamped crop centre. */
+function drawCover(ctx, W, H, crop) {
+  const { w: iw, h: ih, el: im } = S.img; const s = Math.max(W / iw, H / ih) * crop.zoom;
+  const vw = W / (iw * s), vh = H / (ih * s);
+  const cx = clamp(crop.cx, vw / 2, 1 - vw / 2), cy = clamp(crop.cy, vh / 2, 1 - vh / 2);
+  ctx.imageSmoothingQuality = 'high'; ctx.drawImage(im, W / 2 - cx * iw * s, H / 2 - cy * ih * s, iw * s, ih * s);
+  return { cx, cy, s };
+}
+function hashHue(s) { let h = 7; for (const ch of s || 'card') h = (h * 31 + ch.codePointAt(0)) >>> 0; return h % 360; }
+function paintPlaceholder(ctx, W, H) {
+  const name = S.card.name.trim(); const hue = hashHue(name);
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, `hsl(${hue} 45% 26%)`); g.addColorStop(1, `hsl(${(hue + 50) % 360} 50% 12%)`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = Math.max(1, W / 200);
+  for (let i = -H; i < W; i += W / 9) { ctx.beginPath(); ctx.moveTo(i, H); ctx.lineTo(i + H, 0); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = Math.max(2, W / 120); const m = W * .06; ctx.strokeRect(m, m, W - 2 * m, H - 2 * m);
+  ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `700 ${W * .42}px Georgia, "Times New Roman", serif`; ctx.fillText((name[0] || '?').toUpperCase(), W / 2, H * .44);
+  if (name) {
+    let fs = W * .09; ctx.font = `600 ${fs}px Georgia, serif`;
+    while (ctx.measureText(name).width > W * .78 && fs > 8) { fs *= .93; ctx.font = `600 ${fs}px Georgia, serif`; }
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillText(name, W / 2, H * .8);
+  }
+}
+/** Paint the card art (as it will appear) onto any 2:3 canvas. */
+function paintArt(cv) {
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!S.img) return paintPlaceholder(ctx, cv.width, cv.height);
+  const crop = S.settings.size === 'original' ? { zoom: 1, cx: .5, cy: .5 } : S.crop;
+  drawCover(ctx, cv.width, cv.height, crop);
+}
+function paintCropper() {
+  const cv = $('#cropCanvas'), ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!S.img) { paintPlaceholder(ctx, cv.width, cv.height); return; }
+  if (S.settings.size === 'original') { // show the whole picture, letterboxed
+    const s = Math.min(cv.width / S.img.w, cv.height / S.img.h); const w = S.img.w * s, h = S.img.h * s;
+    ctx.drawImage(S.img.el, (cv.width - w) / 2, (cv.height - h) / 2, w, h);
+  } else { const r = drawCover(ctx, cv.width, cv.height, S.crop); S.crop.cx = r.cx; S.crop.cy = r.cy; }
+}
+function syncImageUi() {
+  const has = !!S.img; const orig = S.settings.size === 'original';
+  $('#cropbox').classList.toggle('noimg', !has); $('#dropHint').style.display = has ? 'none' : '';
+  $('#f-zoom').disabled = !has || orig; $('#f-zoom').value = S.crop.zoom; $('#resetCrop').disabled = !has || orig; $('#clearImg').disabled = !has;
+  $('#f-size').value = S.settings.size;
+  const sh = $('#sizeHint');
+  if (!has) { $('#imgInfo').textContent = 'No image yet. A generated placeholder will be used.'; sh.textContent = 'SillyTavern shows cards at 2:3, so this ratio avoids surprise cropping.'; }
+  else {
+    $('#imgInfo').textContent = `${S.img.name} · ${S.img.w} × ${S.img.h}px · ${(S.img.bytes.length / 1024).toFixed(0)} KB`;
+    sh.textContent = orig ? (S.img.isPng ? 'The PNG is embedded byte-for-byte; only the card data is added.' : 'Converted to PNG at its original size.') : 'Drag to reposition, scroll or use the slider to zoom.';
+  }
+  paintCropper(); paintTiles();
+}
+async function canvasPngBytes(cv) { const b = await new Promise(r => cv.toBlob(r, 'image/png')); return new Uint8Array(await b.arrayBuffer()); }
+async function getArtPng() {
+  if (!S.img) { const c = el('canvas', { width: 512, height: 768 }); paintPlaceholder(c.getContext('2d'), 512, 768); return { bytes: await canvasPngBytes(c), placeholder: true }; }
+  const sz = outSize();
+  if (!sz) {
+    if (S.img.isPng) { parsePng(S.img.bytes); return { bytes: S.img.bytes }; }
+    const c = el('canvas', { width: S.img.w, height: S.img.h }); c.getContext('2d').drawImage(S.img.el, 0, 0); return { bytes: await canvasPngBytes(c) };
+  }
+  const c = el('canvas', { width: sz[0], height: sz[1] }); drawCover(c.getContext('2d'), sz[0], sz[1], S.crop);
+  return { bytes: await canvasPngBytes(c) };
+}
+
+/* ---------- Export ---------- */
+function slug(s) { return (s || '').replace(/[^\p{L}\p{N}_ -]+/gu, '').trim().replace(/\s+/g, '_') || 'character'; }
+const fileBase = () => (S.settings.filename.trim().replace(/\.(png|json)$/i, '').replace(/[\\/:*?"<>|]+/g, '') || slug(S.card.name));
+function download(blob, name) {
+  const a = el('a', { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function payloadsFor(fmt) {
+  const out = [];
+  if (fmt === 'v2' || fmt === 'both') out.push(['chara', cardToJson(S.card, 'v2')]);
+  if (fmt === 'v3' || fmt === 'both') out.push(['ccv3', cardToJson(S.card, 'v3')]);
+  return out;
+}
+function requireName() {
+  if (S.card.name.trim()) return true;
+  switchTab('identity'); $('#f-name').focus(); toast('Give your character a name first.', 'warn'); return false;
+}
+async function exportPng() {
+  if (!requireName()) return;
+  try {
+    const art = await getArtPng(); const payloads = payloadsFor(S.settings.format);
+    const out = embedCardInPng(art.bytes, payloads);
+    // Verify: read the file back and make sure the card survived the round trip.
+    const back = await readCardFromPng(out);
+    const want = payloads.find(p => p[0] === 'ccv3') || payloads[0];
+    if (!back || JSON.stringify(back.json) !== JSON.stringify(want[1])) throw new Error('Verification failed: card data did not round-trip.');
+    download(new Blob([out], { type: 'image/png' }), fileBase() + '.png');
+    toast(`Exported ${fileBase()}.png (${(out.length / 1024).toFixed(0)} KB, verified ✓)${art.placeholder ? ' with a generated placeholder image' : ''}`, 'ok');
+  } catch (e) { console.error(e); toast('Export failed: ' + e.message, 'err'); }
+}
+function exportJson(v) { if (!requireName()) return; download(new Blob([JSON.stringify(cardToJson(S.card, v), null, 2)], { type: 'application/json' }), `${fileBase()}.json`); toast(`Exported ${fileBase()}.json (${v.toUpperCase()})`, 'ok'); }
+async function copyText(t) { try { await navigator.clipboard.writeText(t); return true; } catch { const ta = el('textarea', { style: 'position:fixed;opacity:0' }); ta.value = t; document.body.append(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } }
+
+/* ---------- Importing ---------- */
+async function loadCardObject(json, imgBytes, imgName, note) {
+  const card = cardFromJson(json); undoSnap = snapshot();
+  S.card = card;
+  if (imgBytes) await setImage(imgBytes, imgName, 'image/png');
+  syncAll();
+  toast(note, 'ok', { label: 'Undo', fn: () => { restoreSnapshot(undoSnap); undoSnap = null; } });
+}
+async function handleFile(file, { imageOnly = false, loreOnly = false } = {}) {
+  const name = file.name || 'file'; const isImg = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(name);
+  try {
+    if (isImg && !loreOnly) {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      if (!imageOnly && isPng(bytes)) {
+        const found = await readCardFromPng(bytes).catch(e => { toast('Found card data but could not read it: ' + e.message, 'warn'); return null; });
+        if (found) return loadCardObject(found.json, bytes, name, `Loaded ${found.version} card “${asStr(found.json.data?.name ?? found.json.name)}” from ${name}`);
+      }
+      await setImage(bytes, name, file.type); toast('Image set', 'ok'); return;
+    }
+    const text = await file.text(); let json; try { json = JSON.parse(text); } catch { throw new Error(`${name} is not valid JSON.`); }
+    const looksLikeCard = json && typeof json === 'object' && (json.spec || json.name !== undefined || json.char_name !== undefined || json.data?.name !== undefined);
+    if (!loreOnly && looksLikeCard) return loadCardObject(json, null, null, `Loaded “${asStr(json.data?.name ?? json.name ?? json.char_name)}” from ${name}`);
+    const book = loreFromJson(json); undoSnap = snapshot();
+    if (S.card.character_book && S.card.character_book.entries.length) { S.card.character_book.entries.push(...book.entries); } else { S.card.character_book = book; }
+    syncAll(); switchTab('lorebook'); toast(`Imported ${book.entries.length} lorebook entries`, 'ok', { label: 'Undo', fn: () => { restoreSnapshot(undoSnap); undoSnap = null; } });
+  } catch (e) { console.error(e); toast(e.message, 'err'); }
+}
+
+/* ---------- UI: chips, lists ---------- */
+function chips(arr, { placeholder = 'Add…', onChange }) {
+  const wrap = el('div', { class: 'chips' }); const input = el('input', { type: 'text', placeholder, 'aria-label': placeholder, autocomplete: 'off' });
+  const redraw = () => { $$('.chip', wrap).forEach(c => c.remove()); arr.forEach((t, i) => wrap.insertBefore(el('span', { class: 'chip' }, t, el('button', { type: 'button', 'aria-label': 'Remove ' + t, onclick: ev => { ev.stopPropagation(); arr.splice(i, 1); redraw(); onChange(); } }, '×')), input)); };
+  const commit = () => { const parts = input.value.split(',').map(s => s.trim()).filter(Boolean); if (!parts.length) return; for (const p of parts) if (!arr.includes(p)) arr.push(p); input.value = ''; redraw(); onChange(); };
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit(); } else if (e.key === 'Backspace' && !input.value && arr.length) { arr.pop(); redraw(); onChange(); } });
+  input.addEventListener('blur', commit); input.addEventListener('paste', () => setTimeout(() => { if (input.value.includes(',')) commit(); }));
+  wrap.addEventListener('click', () => input.focus()); wrap.append(input); redraw(); return wrap;
+}
+function stringList(container, arr, { label, placeholder }) {
+  container.replaceChildren();
+  if (!arr.length) container.append(el('div', { class: 'empty', text: 'None yet.' }));
+  arr.forEach((val, i) => {
+    const ta = el('textarea', { rows: 5, placeholder }); ta.value = val; const t = el('span', { class: 'tok', text: `≈${tok(val)} tok` });
+    ta.addEventListener('input', () => { arr[i] = ta.value; t.textContent = `≈${tok(ta.value)} tok`; touch(); });
+    container.append(el('div', { class: 'item' }, el('div', { class: 'item-h' }, el('span', { class: 'n', text: `${label} ${i + 1}` }), t,
+      el('button', { class: 'btn sm danger', type: 'button', text: 'Remove', onclick: () => { arr.splice(i, 1); stringList(container, arr, { label, placeholder }); touch(); } })), ta));
+  });
+}
+function renderLists() {
+  stringList($('#altList'), S.card.alternate_greetings, { label: 'Greeting', placeholder: 'Another way this character could open the chat…' });
+  stringList($('#groupList'), S.card.group_only_greetings, { label: 'Group greeting', placeholder: 'Greeting used only in group chats…' });
+  const tagsMount = $('#tagsMount'); tagsMount.replaceChildren(chips(S.card.tags, { placeholder: 'Add tag, press Enter', onChange: touch }));
+}
+
+/* ---------- UI: lorebook ---------- */
+function renderLore() {
+  const b = S.card.character_book; $('#loreEmpty').hidden = !!b; $('#loreMain').hidden = !b;
+  $('#loreCount').textContent = b ? b.entries.length : 0;
+  const list = $('#entryList'); list.replaceChildren(); if (!b) return;
+  if (!b.entries.length) list.append(el('div', { class: 'empty card', text: 'No entries yet. Add one to get started.' }));
+  b.entries.forEach((e, i) => list.append(entryEl(e, i, b)));
+}
+function entryEl(e, i, b) {
+  const move = d => { const j = i + d; if (j < 0 || j >= b.entries.length) return; [b.entries[i], b.entries[j]] = [b.entries[j], b.entries[i]]; renderLore(); touch(); };
+  const keysPreview = () => e.keys.slice(0, 4).join(', ') + (e.keys.length > 4 ? '…' : '');
+  const ttl = el('div', { class: 'ttl' }); const setTtl = () => { ttl.replaceChildren(e.comment || e.keys[0] || `Entry ${i + 1}`, el('small', { text: keysPreview() })); }; setTtl();
+  const wrap = el('div', { class: 'entry' + (e._open ? ' open' : '') + (e.enabled ? '' : ' off') });
+  const en = el('input', { type: 'checkbox', title: 'Enabled', 'aria-label': 'Entry enabled' }); en.checked = e.enabled;
+  en.addEventListener('click', ev => ev.stopPropagation()); en.addEventListener('change', () => { e.enabled = en.checked; wrap.classList.toggle('off', !e.enabled); touch(); });
+  const btn = (txt, title, fn, cls = '') => el('button', { class: 'btn sm icon ghost ' + cls, type: 'button', title, 'aria-label': title, onclick: ev => { ev.stopPropagation(); fn(); } }, txt);
+  const head = el('div', { class: 'entry-h', onclick: () => { e._open = !e._open; wrap.classList.toggle('open', e._open); } },
+    en, el('span', { class: 'chev', text: '▶' }), ttl, e.constant ? el('span', { class: 'pill const', text: 'always on' }) : null,
+    btn('↑', 'Move up', () => move(-1)), btn('↓', 'Move down', () => move(1)),
+    btn('⧉', 'Duplicate', () => { const c = clone({ ...e, _open: false }); c._uid = ++uidN; b.entries.splice(i + 1, 0, c); renderLore(); touch(); }),
+    btn('✕', 'Delete entry', () => { const snap = snapshot(); b.entries.splice(i, 1); renderLore(); touch(); toast('Entry deleted', 'info', { label: 'Undo', fn: () => restoreSnapshot(snap) }); }, 'danger'));
+  const keys = chips(e.keys, { placeholder: 'Keyword, press Enter', onChange: () => { setTtl(); touch(); } });
+  const sec = chips(e.secondary_keys, { placeholder: 'Secondary keyword', onChange: touch });
+  const secField = el('div', { class: 'field' }, el('div', { class: 'fhead' }, el('label', { text: 'Secondary keywords (must also match)' })), sec); secField.hidden = !e.selective;
+  const content = el('textarea', { rows: 6, placeholder: 'What the model should know when this triggers…' }); content.value = e.content;
+  const ct = el('span', { class: 'tok', text: `≈${tok(e.content)} tok` });
+  content.addEventListener('input', () => { e.content = content.value; ct.textContent = `≈${tok(e.content)} tok`; touch(); });
+  const title = el('input', { type: 'text', placeholder: 'Title / memo (not sent to the model)' }); title.value = e.comment; title.addEventListener('input', () => { e.comment = title.value; setTtl(); touch(); });
+  const chk = (label, key, extra) => { const c = el('input', { type: 'checkbox' }); c.checked = !!e[key]; c.addEventListener('change', () => { e[key] = c.checked; extra?.(); touch(); }); return el('label', { class: 'check' }, c, label); };
+  const num = (label, key) => { const n = el('input', { type: 'number' }); n.value = e[key]; n.addEventListener('input', () => { e[key] = Number(n.value) || 0; touch(); }); return el('div', { class: 'field' }, el('div', { class: 'fhead' }, el('label', { text: label })), n); };
+  const pos = el('select', {}, el('option', { value: 'before_char', text: 'Before character definition' }), el('option', { value: 'after_char', text: 'After character definition' }));
+  pos.value = e.position; pos.addEventListener('change', () => { e.position = pos.value; if (e.extensions.position > 1) e.extensions.position = pos.value === 'after_char' ? 1 : 0; touch(); });
+  const body = el('div', { class: 'entry-b' },
+    el('div', { class: 'field', style: 'margin-top:12px' }, el('div', { class: 'fhead' }, el('label', { text: 'Title' })), title),
+    el('div', { class: 'field' }, el('div', { class: 'fhead' }, el('label', { text: 'Keywords' }), el('span', { class: 'tok', text: 'any one triggers the entry' })), keys),
+    el('div', { class: 'field' }, el('div', { class: 'fhead' }, el('label', { text: 'Content' }), ct), content),
+    el('div', { class: 'row', style: 'margin-bottom:12px' },
+      chk('Always on (constant)', 'constant', () => renderLore()),
+      chk('Use secondary keywords', 'selective', () => { secField.hidden = !e.selective; }),
+      chk('Case sensitive', 'case_sensitive'), chk('Regex keys (V3)', 'use_regex')),
+    secField,
+    el('div', { class: 'grid3' }, el('div', { class: 'field' }, el('div', { class: 'fhead' }, el('label', { text: 'Position' })), pos), num('Insertion order', 'insertion_order'), num('Priority', 'priority')));
+  wrap.append(head, body); return wrap;
+}
+
+/* ---------- UI: derived views ---------- */
+function bookTokens() {
+  const b = S.card.character_book; let always = 0, demand = 0;
+  if (b) for (const e of b.entries) { if (!e.enabled) continue; if (e.constant) always += tok(e.content); else demand += tok(e.content); }
+  return { always, demand };
+}
+function lintBraces(s) { const o = (s.match(/\{\{/g) || []).length, c = (s.match(/\}\}/g) || []).length; return o !== c; }
+function updateMeters() {
+  const c = S.card, dp = c.extensions.depth_prompt; const lore = bookTokens();
+  const always = ['description', 'personality', 'scenario', 'system_prompt', 'post_history_instructions', 'mes_example'].reduce((n, k) => n + tok(c[k]), 0) + tok(dp.prompt) + lore.always;
+  const rows = [['Always sent', always, 1500, 'Description, scenario, examples, prompts, constant lore'], ['First message', tok(c.first_mes), 600, ''], ['Lorebook (on demand)', lore.demand, 1500, 'Only when keywords match']];
+  $('#meters').replaceChildren(...rows.map(([l, v, max, tip]) => el('div', { class: 'meter', title: tip },
+    el('div', { class: 'm-h' }, el('span', { text: l }), el('b', { text: '≈' + v })), el('div', { class: 'bar' }, el('i', { class: v > max ? 'hot' : '', style: `width:${clamp(v / max * 100, v ? 3 : 0, 100)}%` })))));
+  $$('[data-tokof]').forEach(n => { n.textContent = '≈' + tok(getPath(S.card, n.dataset.tokof)) + ' tok'; });
+}
+function updateChecks() {
+  const c = S.card, L = []; const add = (k, t) => L.push([k, t]);
+  c.name.trim() ? add('ok', 'Name is set') : add('err', 'Name is required');
+  c.description.trim() ? add('ok', 'Has a description') : add('warn', 'Description is empty');
+  c.first_mes.trim() ? add('ok', 'Has a first message') : add('warn', 'No first message. Chats start empty.');
+  if (!c.mes_example.trim()) add('info', 'No example dialogue (optional, but helps voice)');
+  const all = ['description', 'personality', 'scenario', 'first_mes', 'mes_example', 'system_prompt', 'post_history_instructions', 'creator_notes'].map(k => c[k]).concat(c.alternate_greetings, c.character_book?.entries.map(e => e.content) || []);
+  if (all.some(lintBraces)) add('warn', 'Unbalanced {{ }} in some text');
+  if (c.alternate_greetings.some(g => !g.trim())) add('warn', 'An alternate greeting is empty');
+  const b = c.character_book; if (b) { const bad = b.entries.filter(e => e.enabled && !e.constant && !e.keys.length).length; if (bad) add('warn', `${bad} lorebook entr${bad > 1 ? 'ies have' : 'y has'} no keywords`); const empty = b.entries.filter(e => !e.content.trim()).length; if (empty) add('warn', `${empty} lorebook entr${empty > 1 ? 'ies are' : 'y is'} empty`); }
+  const lore = bookTokens(); const always = ['description', 'personality', 'scenario', 'system_prompt', 'post_history_instructions', 'mes_example'].reduce((n, k) => n + tok(c[k]), 0) + lore.always;
+  if (always > 2000) add('warn', `Heavy: ≈${always} tokens sent every message`);
+  if (!S.img) add('info', 'No image: a placeholder will be generated');
+  else if (S.settings.size === 'original' && Math.abs(S.img.w / S.img.h - 2 / 3) > .02) add('info', 'Image is not 2:3; SillyTavern will crop it');
+  if (S.img && S.img.bytes.length > 4 * 1024 * 1024 && S.settings.size === 'original') add('warn', 'Large image. Consider cropping to shrink the file.');
+  if (S.settings.format !== 'v2' && (c.nickname || c.group_only_greetings.length)) add('ok', 'V3 fields will be included');
+  else if (S.settings.format === 'v2' && (c.nickname || c.group_only_greetings.length)) add('info', 'V3-only fields are dropped in V2 export');
+  const icon = { ok: '✓', warn: '!', err: '✕', info: 'i' };
+  $('#checks').replaceChildren(...L.map(([k, t]) => el('li', { class: k }, el('b', { text: icon[k] }), el('span', { text: t }))));
+}
+function paintTiles() {
+  paintArt($('#tile'));
+  $$('canvas.mini').forEach(paintArt);
+}
+function updateTile() {
+  const c = S.card; $('#tileName').textContent = c.name.trim() || 'Unnamed character';
+  $('#tileBy').textContent = c.creator ? 'by ' + c.creator + (c.character_version ? ' · v' + c.character_version : '') : (c.character_version ? 'v' + c.character_version : '');
+  $('#tileTags').replaceChildren(...c.tags.slice(0, 10).map(t => el('span', { text: t })));
+}
+function subst(s) { const n = S.card.name.trim() || 'Character', u = S.settings.userName.trim() || 'You'; return String(s).replace(/\{\{\/\/[\s\S]*?\}\}/g, '').replace(/\{\{char\}\}|<BOT>/gi, n).replace(/\{\{user\}\}|<USER>/gi, u); }
+function md(s) {
+  s = esc(s).replace(/```([\s\S]*?)```/g, '<pre>$1</pre>').replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>').replace(/\*([^*\n]+)\*/g, '<i>$1</i>')
+    .replace(/"([^"\n]+)"/g, '<q>"$1"</q>').replace(/“([^”\n]+)”/g, '<q>“$1”</q>');
+  return s.replace(/\n/g, '<br>');
+}
+let swipeIdx = 0;
+function updatePreview() {
+  if (S.tab !== 'preview') return;
+  const c = S.card; const greets = [c.first_mes, ...c.alternate_greetings]; swipeIdx = clamp(swipeIdx, 0, greets.length - 1);
+  const chat = $('#chat'); chat.replaceChildren();
+  const av = el('canvas', { class: 'mini', width: 92, height: 138 });
+  const who = el('div', { class: 'who' }, c.name.trim() || 'Character');
+  if (greets.length > 1) who.append(el('span', { class: 'swipe' }, el('button', { class: 'btn sm icon ghost', 'aria-label': 'Previous greeting', onclick: () => { swipeIdx = (swipeIdx + greets.length - 1) % greets.length; updatePreview(); } }, '◀'), `${swipeIdx + 1}/${greets.length}`, el('button', { class: 'btn sm icon ghost', 'aria-label': 'Next greeting', onclick: () => { swipeIdx = (swipeIdx + 1) % greets.length; updatePreview(); } }, '▶')));
+  const bd = el('div', { class: 'bd' }); bd.innerHTML = greets[swipeIdx].trim() ? md(subst(greets[swipeIdx])) : '<i>(no first message yet)</i>';
+  chat.append(el('div', { class: 'msg' }, av, el('div', {}, who, bd)));
+  const ex = $('#exPrev'); ex.replaceChildren();
+  const blocks = c.mes_example.split(/<START>/i).map(s => s.trim()).filter(Boolean);
+  if (!blocks.length) ex.append(el('i', { text: 'No example dialogue yet.' }));
+  blocks.forEach(b => { const d = el('div', { class: 'ex' }); d.innerHTML = md(subst(b)); ex.append(d); });
+  paintTiles();
+}
+function updateRawIfOpen() { if (S.tab === 'export') refreshRaw(); }
+function refreshRaw() { $('#raw').value = JSON.stringify(cardToJson(S.card, S.settings.rawVersion), null, 2); $('#rawStatus').textContent = ''; $('#rawStatus').className = 'status'; }
+
+/* ---------- Sync + persistence ---------- */
+const derive = () => { updateTile(); updateMeters(); updateChecks(); paintTiles(); updatePreview(); $('#loreCount').textContent = S.card.character_book?.entries.length ?? 0; $('#talkOut').textContent = Number(S.card.extensions.talkativeness).toFixed(2); };
+const saveDraft = debounce(() => { try { localStorage.setItem(KEY, JSON.stringify({ card: S.card, settings: S.settings, crop: S.crop })); } catch { /* quota or privacy mode */ } }, 500);
+function touch() { derive(); saveDraft(); }
+function saveImageDraft() {
+  try {
+    if (!S.img) { localStorage.removeItem(KEY + '.img'); return; }
+    if (S.img.bytes.length > 2.5 * 1024 * 1024) { localStorage.removeItem(KEY + '.img'); return; }
+    const r = new FileReader(); r.onload = () => { try { localStorage.setItem(KEY + '.img', JSON.stringify({ name: S.img.name, data: r.result })); } catch { /* ignore */ } };
+    r.readAsDataURL(new Blob([S.img.bytes], { type: S.img.mime }));
+  } catch { /* ignore */ }
+}
+function syncForm() {
+  $$('[data-f]').forEach(n => { const v = getPath(S.card, n.dataset.f); if (n.type === 'checkbox') n.checked = !!v; else n.value = v ?? ''; });
+  $$('[data-s]').forEach(n => { const v = S.settings[n.dataset.s]; if (n.type === 'radio') n.checked = n.value === v; else n.value = v ?? ''; });
+  document.documentElement.dataset.theme = S.settings.theme;
+}
+function syncAll() { syncForm(); renderLists(); renderLore(); syncImageUi(); derive(); saveDraft(); saveImageDraft(); if (S.tab === 'export') refreshRaw(); }
+
+function switchTab(t) {
+  S.tab = t; $$('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t)); $$('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + t));
+  if (t === 'preview') updatePreview(); if (t === 'export') refreshRaw(); if (t === 'image') { paintCropper(); }
+}
+
+/* ---------- Wiring ---------- */
+function onFieldEvent(e) {
+  const t = e.target;
+  if (t.dataset.f) {
+    if (t.type === 'radio') return;
+    let v = t.type === 'checkbox' ? t.checked : (t.type === 'range' || t.type === 'number') ? (t.value === '' ? 0 : Number(t.value)) : t.value;
+    if (e.type === 'change' && t.type !== 'checkbox' && t.tagName !== 'SELECT') return;
+    setPath(S.card, t.dataset.f, v); touch(); updateRawIfOpen();
+  } else if (t.dataset.s) {
+    if (t.type === 'radio' && e.type !== 'change') return;
+    S.settings[t.dataset.s] = t.value; if (t.dataset.s === 'size') { syncImageUi(); } if (t.dataset.s === 'rawVersion') refreshRaw(); touch();
+  }
+}
+document.addEventListener('input', onFieldEvent); document.addEventListener('change', onFieldEvent);
+
+$$('.tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+$$('.tabs').forEach(n => n.addEventListener('keydown', e => { if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return; const tabs = $$('.tab'); const i = tabs.findIndex(b => b.dataset.tab === S.tab); const nx = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]; nx.click(); nx.focus(); }));
+
+// macro buttons
+$$('.macros').forEach(m => ['{{char}}', '{{user}}'].forEach(txt => m.append(el('button', { type: 'button', title: 'Insert ' + txt, onclick: () => {
+  const ta = $('#' + m.dataset.m); ta.focus(); ta.setRangeText(txt, ta.selectionStart, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input', { bubbles: true }));
+} }, txt))));
+$('#insStart').addEventListener('click', () => { const ta = $('#f-ex'); ta.focus(); const pre = ta.value && !/\n$/.test(ta.value.slice(0, ta.selectionStart)) && ta.selectionStart ? '\n' : ''; ta.setRangeText(pre + '<START>\n', ta.selectionStart, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input', { bubbles: true })); });
+
+$('#addAlt').addEventListener('click', () => { S.card.alternate_greetings.push(''); renderLists(); touch(); $$('#altList textarea').pop()?.focus(); });
+$('#addGroup').addEventListener('click', () => { S.card.group_only_greetings.push(''); renderLists(); touch(); $$('#groupList textarea').pop()?.focus(); });
+
+// lorebook
+$('#addBook').addEventListener('click', () => { S.card.character_book = blankBook(); S.card.character_book.entries.push(blankEntry()); syncForm(); renderLore(); touch(); });
+$('#addEntry').addEventListener('click', () => { S.card.character_book.entries.push(blankEntry()); renderLore(); touch(); $$('.entry:last-child input[type=text]').pop()?.focus(); });
+$('#toggleAll').addEventListener('click', () => { const es = S.card.character_book.entries; const open = !es.every(e => e._open); es.forEach(e => e._open = open); renderLore(); });
+$('#removeBook').addEventListener('click', () => { const snap = snapshot(); S.card.character_book = null; renderLore(); touch(); toast('Lorebook removed', 'info', { label: 'Undo', fn: () => restoreSnapshot(snap) }); });
+$('#importLore').addEventListener('click', () => $('#fileLore').click()); $('#importLoreEmpty').addEventListener('click', () => $('#fileLore').click());
+$('#fileLore').addEventListener('change', async e => { for (const f of e.target.files) await handleFile(f, { loreOnly: true }); e.target.value = ''; });
+$('#exportLore').addEventListener('click', () => { download(new Blob([JSON.stringify(bookToJson(S.card.character_book, true), null, 2)], { type: 'application/json' }), `${slug(S.card.character_book.name || S.card.name)}_lorebook.json`); });
+
+// image
+const pickImg = () => $('#fileImg').click();
+$('#pickImg').addEventListener('click', pickImg);
+$('#cropbox').addEventListener('click', e => { if (!S.img && !e.defaultPrevented) pickImg(); });
+$('#tileArt').addEventListener('click', () => { switchTab('image'); });
+$('#fileImg').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) await handleFile(f, { imageOnly: true }); });
+$('#clearImg').addEventListener('click', () => { const snap = snapshot(); S.img = null; syncImageUi(); touch(); saveImageDraft(); toast('Image removed', 'info', { label: 'Undo', fn: () => { restoreSnapshot(snap); saveImageDraft(); } }); });
+$('#resetCrop').addEventListener('click', () => { S.crop = { zoom: 1, cx: .5, cy: .5 }; syncImageUi(); touch(); });
+$('#f-zoom').addEventListener('input', e => { S.crop.zoom = Number(e.target.value); paintCropper(); paintTiles(); saveDraft(); });
+(() => {
+  const box = $('#cropbox'); let drag = null;
+  box.addEventListener('pointerdown', e => { if (!S.img || S.settings.size === 'original') return; drag = { x: e.clientX, y: e.clientY, cx: S.crop.cx, cy: S.crop.cy }; box.setPointerCapture(e.pointerId); });
+  box.addEventListener('pointermove', e => {
+    if (!drag) return; const cv = $('#cropCanvas'); const k = cv.width / box.clientWidth; const s = Math.max(cv.width / S.img.w, cv.height / S.img.h) * S.crop.zoom;
+    S.crop.cx = drag.cx - (e.clientX - drag.x) * k / (S.img.w * s); S.crop.cy = drag.cy - (e.clientY - drag.y) * k / (S.img.h * s); paintCropper(); paintTiles();
+  });
+  const end = () => { if (drag) { drag = null; saveDraft(); } }; box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
+  box.addEventListener('wheel', e => { if (!S.img || S.settings.size === 'original') return; e.preventDefault(); S.crop.zoom = clamp(S.crop.zoom * Math.exp(-e.deltaY * .0012), 1, 5); $('#f-zoom').value = S.crop.zoom; paintCropper(); paintTiles(); saveDraft(); }, { passive: false });
+})();
+
+// raw JSON
+$('#rawRefresh').addEventListener('click', refreshRaw);
+$('#rawApply').addEventListener('click', () => {
+  const st = $('#rawStatus');
+  try { const card = cardFromJson(JSON.parse($('#raw').value)); undoSnap = snapshot(); S.card = card; syncAll(); st.textContent = '✓ Applied to the form.'; st.className = 'status ok'; toast('JSON applied', 'ok', { label: 'Undo', fn: () => { restoreSnapshot(undoSnap); undoSnap = null; } }); }
+  catch (e) { st.textContent = '✕ ' + e.message; st.className = 'status err'; }
+});
+
+// export + header
+const exportAll = () => exportPng();
+['#btnExportTop', '#btnExportSide', '#btnExportPng'].forEach(s => $(s).addEventListener('click', exportAll));
+$('#btnJson2').addEventListener('click', () => exportJson('v2')); $('#btnJson3').addEventListener('click', () => exportJson('v3'));
+$('#btnCopy').addEventListener('click', async () => { const ok = await copyText(JSON.stringify(cardToJson(S.card, S.settings.rawVersion), null, 2)); toast(ok ? `Copied ${S.settings.rawVersion.toUpperCase()} JSON` : 'Copy failed', ok ? 'ok' : 'err'); });
+$('#btnOpen').addEventListener('click', () => $('#fileOpen').click());
+$('#fileOpen').addEventListener('change', async e => { for (const f of e.target.files) await handleFile(f); e.target.value = ''; });
+$('#btnTheme').addEventListener('click', () => { S.settings.theme = S.settings.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = S.settings.theme; saveDraft(); });
+$('#btnNew').addEventListener('click', () => { const snap = snapshot(); S.card = blankCard(); S.img = null; S.crop = { zoom: 1, cx: .5, cy: .5 }; S.settings.size = '512x768'; S.settings.filename = ''; syncAll(); switchTab('identity'); toast('Started a blank card', 'ok', { label: 'Undo', fn: () => { restoreSnapshot(snap); saveImageDraft(); } }); });
+$('#btnExample').addEventListener('click', () => loadCardObject(EXAMPLE, null, null, 'Loaded the example card'));
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); exportPng(); } });
+
+// drag & drop anywhere
+(() => {
+  let depth = 0; const ov = $('#drop'); const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  window.addEventListener('dragenter', e => { if (hasFiles(e)) { depth++; ov.classList.add('on'); } });
+  window.addEventListener('dragleave', e => { if (hasFiles(e) && --depth <= 0) { depth = 0; ov.classList.remove('on'); } });
+  window.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener('drop', async e => { if (!hasFiles(e)) return; e.preventDefault(); depth = 0; ov.classList.remove('on'); for (const f of e.dataTransfer.files) await handleFile(f); });
+})();
+window.addEventListener('beforeunload', () => { try { localStorage.setItem(KEY, JSON.stringify({ card: S.card, settings: S.settings, crop: S.crop })); } catch { /* ignore */ } });
+
+/* ---------- Example card ---------- */
+const EXAMPLE = {
+  spec: 'chara_card_v2', spec_version: '2.0', data: {
+    name: 'Mirelle Voss', creator: 'Example', character_version: '1.0', tags: ['fantasy', 'slice of life', 'original character'],
+    description: '{{char}} is a weathered lighthouse keeper in her fifties who tends the Gray Lantern, the last working light on the Sundered Coast.\n\nAppearance: tall and wiry, with salt-white hair tied in a rope braid, a brass monocle on a chain, and hands scarred from years of rope work.\nSpeech: dry, economical, and quietly funny. She rarely raises her voice and never wastes a word.\nQuirks: names every storm; hums sea shanties while polishing lenses; distrusts anyone who refuses her tea.',
+    personality: 'Patient, wry, protective, secretly sentimental',
+    scenario: '{{user}} has been shipwrecked and pulled from the surf at the foot of the Gray Lantern. {{char}} has dragged them inside to dry out before the next storm arrives.',
+    first_mes: '*The door bangs shut against the wind. Mirelle drops a wool blanket over your shoulders and sets a chipped mug in your hands.*\n\n"Drink. It\'s tea, not poison, whatever your face is saying." *She peers at you through the monocle.* "Name, {{user}}? And how many of your crew are still out there?"',
+    alternate_greetings: ['*You wake to the smell of smoke and salt. Someone is humming off-key nearby.*\n\n"Ah. You live. I owed Tobias a coin that you wouldn\'t."'],
+    mes_example: '<START>\n{{user}}: Is the light always this loud?\n{{char}}: *She taps the brass housing.* "Only when it\'s angry. Tonight she is furious."\n<START>\n{{user}}: Why do you stay out here?\n{{char}}: *A long pause, then a shrug.* "Someone has to count the ships home."',
+    creator_notes: 'A cozy, low-stakes starter character. Works well for slow, atmospheric roleplay. Try swiping the greeting.',
+    system_prompt: '', post_history_instructions: '',
+    extensions: { talkativeness: 0.4, fav: false, world: '', depth_prompt: { prompt: '', depth: 4, role: 'system' } },
+    character_book: {
+      name: 'The Sundered Coast', description: 'Local lore for the Gray Lantern', scan_depth: 50, token_budget: 500, recursive_scanning: false, extensions: {},
+      entries: [
+        { id: 0, keys: ['Gray Lantern', 'lighthouse', 'light'], secondary_keys: [], comment: 'The Gray Lantern', content: 'The Gray Lantern is a 90-foot stone lighthouse, built three centuries ago. Its lens was ground from a single piece of storm-glass and burns blue-white. Mirelle has kept it for twenty-two years.', constant: false, selective: false, insertion_order: 100, enabled: true, position: 'before_char', priority: 10, case_sensitive: false, extensions: { position: 0 } },
+        { id: 1, keys: ['Tobias', 'ferryman'], secondary_keys: [], comment: 'Tobias the ferryman', content: 'Tobias Quill runs the supply ferry every second Thursday. He is Mirelle\'s oldest friend and loses every bet they make.', constant: false, selective: false, insertion_order: 110, enabled: true, position: 'before_char', priority: 10, case_sensitive: false, extensions: { position: 0 } }
+      ]
+    }
+  }
+};
+
+/* ---------- Boot ---------- */
+(async function boot() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (d && d.card) {
+      const base = blankCard(); S.card = { ...base, ...d.card, extensions: { ...base.extensions, ...(d.card.extensions || {}), depth_prompt: { ...base.extensions.depth_prompt, ...(d.card.extensions?.depth_prompt || {}) } } };
+      for (const k of ['alternate_greetings', 'group_only_greetings', 'tags']) if (!Array.isArray(S.card[k])) S.card[k] = [];
+      if (S.card.character_book) { S.card.character_book.entries = (S.card.character_book.entries || []).map(e => ({ ...blankEntry(), ...e, _uid: ++uidN })); }
+      S.card.extra ||= {}; S.settings = { ...DEFAULTS, ...(d.settings || {}) }; S.crop = { zoom: 1, cx: .5, cy: .5, ...(d.crop || {}) };
+      const im = JSON.parse(localStorage.getItem(KEY + '.img') || 'null');
+      if (im?.data) { const bin = atob(im.data.split(',')[1]); const bytes = Uint8Array.from(bin, c => c.charCodeAt(0)); const keep = { ...S.crop }, sz = S.settings.size; await setImage(bytes, im.name, im.data.slice(5, im.data.indexOf(';'))); S.crop = keep; S.settings.size = sz; }
+      if (S.card.name || S.card.description) toast('Restored your last draft', 'info');
+    }
+  } catch (e) { console.warn('Draft restore failed', e); }
+  syncAll();
+  if (!S.card.name && !S.card.description && !S.card.character_book) { /* fresh start */ }
+})();
+</script>
+</body>
+</html>
