@@ -1,0 +1,11 @@
+# Language stats on GitHub: the whole app lives in one HTML file
+index.html linguist-detectable
+index.html linguist-language=HTML
+
+# Screenshots and docs should not count toward language stats
+docs/** linguist-documentation
+*.png binary
+
+# Keep line endings consistent across Windows/macOS/Linux
+* text=auto eol=lf
+*.png -text
