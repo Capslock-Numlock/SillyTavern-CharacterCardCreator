@@ -11,6 +11,8 @@ One HTML file. No Python, no install, no account. Works offline.
 ![Card spec](https://img.shields.io/badge/cards-V2%20%2B%20V3-8b7cf6?style=flat-square)
 ![License: MIT](https://img.shields.io/badge/license-MIT-6f9bb8?style=flat-square)
 
+**[▶ Open the live app](https://capslock-numlock.github.io/SillyTavern-CharacterCardCreator/)**
+
 <img src="docs/editor.png" alt="The card editor" width="900">
 
 </div>
@@ -24,7 +26,7 @@ One HTML file. No Python, no install, no account. Works offline.
 3. Fill in the card, pick an image, press **Export PNG**.
 4. In SillyTavern, click **Import character from file** and choose the PNG.
 
-Prefer a link? Enable GitHub Pages for this repo (Settings → Pages → `main`/`master` branch, root) and use the page URL.
+**Just want to try it?** Use the hosted copy: **https://capslock-numlock.github.io/SillyTavern-CharacterCardCreator/** (it runs entirely in your browser, nothing is uploaded).
 
 > **Upgrading from the Python version?** The old Tkinter app is gone, along with `pypng` and PyInstaller. Everything it did (load JSON, pick a PNG, embed a `chara` chunk) is built into the page, and your existing `.json` files still load.
 
